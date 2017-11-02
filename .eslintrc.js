@@ -19,7 +19,8 @@ module.exports = {
   "parser": "babel-eslint",
   "globals": {
     "dom": true,
-    "ENV": true,
+    "raf": true,
+    "THREE": true,
     "TimelineLite": false,
     "TimelineMax": false,
     "TweenLite": false,
