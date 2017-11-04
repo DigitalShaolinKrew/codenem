@@ -18,7 +18,7 @@ class Loader {
   }
 }
 
-class Cube extends THREE.Object3D {
+class Sphere extends THREE.Object3D {
   constructor () {
     super()
 
@@ -60,8 +60,8 @@ class Xp {
       .forEach( ( fn ) => this[ fn ] = this[ fn ].bind( this ) )
   }
   initMeshes () {
-    this.cube = new Cube()
-    this.scene.add( this.cube )
+    this.sphere = new Sphere()
+    this.scene.add( this.sphere )
   }
   initLights () {
     const ambientLight = new THREE.AmbientLight( 0x111111 )
@@ -76,7 +76,7 @@ class Xp {
     this.scene.add( light2 )
   }
   update () {
-    this.cube.update()
+    this.sphere.update()
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
     this.renderer.render( this.scene, this.camera )
@@ -110,6 +110,7 @@ class App {
   onResize () {
     Window.w = window.innerWidth
     Window.h = window.innerHeight
+    this.xp.resize()
   }
   onMouseMove ( e ) {
     e.preventDefault()
