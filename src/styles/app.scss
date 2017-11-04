@@ -48,13 +48,45 @@ html, body {
     will-change: transform;
   }
 }
+
+.infos {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  color: $WHITE;
+  background: transparent;
+  border: none;
+  font-family: 'Oswald';
+  font-weight: 500;
+  font-size: 1.5rem;
+  cursor: pointer;
+
+  &:after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: currentColor;
+      transform-origin: 100% 50%;
+      transform: scale( 0 );
+      transition: transform 0.2s $easeOutSine;
+      will-change: transform;
+    }
+      
+  &:hover:after {
+    transform-origin: 0% 50%;
+    transform: scaleX( 1 );
+  }
+}
    
 
 .credits {
   position: absolute;
   right: 20px;
   bottom: 20px;
-  color: $BLACK;
+  color: $WHITE;
   text-align: right;
   font-family: 'Oswald';
   
@@ -68,7 +100,7 @@ html, body {
   &__link {
     text-decoration: none;
     font-weight: 300;
-    color: $BLACK;
+    color: $WHITE;
     font-size: 1.3rem;
     position: relative;
 
@@ -79,7 +111,7 @@ html, body {
       left: 0;
       width: 100%;
       height: 1px;
-      background-color: $BLACK;
+      background-color: currentColor;
       transform-origin: 100% 50%;
       transform: scale( 0 );
       transition: transform 0.2s $easeOutSine;

@@ -7,18 +7,24 @@
   <title>Codenem</title>
 </head>
 <body>
-  <div class="loader">
+  <div class="loader loader--hidden">
     <div class="loader__progress">
       <div class="loader__progress__bar"></div>
     </div>  
   </div>
-  
+  <button class="infos" id="refresh">
+    Re-generate
+  </button>
+  <div class="app"></div>
+
   <div class="credits">
     <h1 class="credits__title">shaolin405</h1>
     <p class="credits__wrapper">
       <a href="https://twitter.com/avanderpotte" target="_blank" class="credits__link">avanderpotte</a> ☓ <a href="https://twitter.com/leixng" target="_blank" class="credits__link">leixng</a>
     </p>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>
+  <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/127738/OrbitControls.js"></script>
   <script src="app.bundle.js"></script>
 </body>
 </html>
