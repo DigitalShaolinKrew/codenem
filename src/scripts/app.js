@@ -3,6 +3,11 @@ require( './utils' )
 
 const Mouse = { x: 0, y: 0, nX: 0, nY: 0 }
 const Window = { w: window.innerWidth, h: window.innerHeight }
+const randomInRange = ( min, max ) => {
+  return Math.random() * ( max - min ) + min
+}
+
+let SPEED = 0.5
 
 class Loader {
   init () {
@@ -95,17 +100,21 @@ class Terrain extends THREE.Object3D {
   }
 }
 class Checkpoint extends THREE.Object3D {
-  constructor () {
+  constructor ( index ) {
     super()
-
-    this.geometry = new THREE.PlaneBufferGeometry( 100, 100 )
+    this.INTERACTIVE = true
+    this.resize = this.resize.bind( this )
+    this.animate = this.animate.bind( this )
+    this.reset = this.reset.bind( this )
+    this.geometry = new THREE.PlaneBufferGeometry( 40, 40 )
     this.uniforms = {
       uResolution: { value: new THREE.Vector2() },
       uTime: { value: 0 },
-      uRadiusOuter: { value: 40 },
-      uStrokeOuter: { value: 10 },
+      uRadiusOuter: { value: 15 },
+      uStrokeOuter: { value: 6 },
       uStrokeInner: { value: 0.5 },
       uShift: { value: 1 },
+      uOpacity: { value: 1 },
       uColor: { value: new THREE.Color( 0xffffff ) }
     }
     this.material = new THREE.ShaderMaterial( {
@@ -116,47 +125,41 @@ class Checkpoint extends THREE.Object3D {
       transparent: true
     } )
     this.mesh = new THREE.Mesh( this.geometry, this.material )
+    this.mesh.name = `checkpoint-${index}`
+    this.mesh.animate = this.animate
     this.add( this.mesh )
-    // const tetra = new THREE.DodecahedronGeometry( 2, 0 )
-    // const material = new THREE.MeshStandardMaterial( {
-    //   color: 0xffffff,
-    //   emissive: 0xff0000,
-    //   metalness: 0.2,
-    //   roughness: 0.4,
-    //   flatShading: true
-    // } )
-    // const mesh = new THREE.Mesh( tetra, material )
-    // const radius = ( this.uniforms.uRadiusOuter.value - this.uniforms.uStrokeOuter.value )
-    // this.particules = []
-    // for ( let i = 0; i < 10; i++ ) {
-    //   const m = mesh.clone()
-    //   const a = Math.random() * 2 * Math.PI
-    //   const shift = 5 * Math.random()
-    //   m.position.set(
-    //     Math.cos( a ) * ( radius + shift ),
-    //     Math.sin( a ) * ( radius + shift ),
-    //     15 * Math.sin( shift )
-    //   )
-    //   m.end = {
-    //     x: Math.cos( a ) * radius * 1.5,
-    //     y: Math.sin( a ) * radius * 1.5
-    //   }
-    //   this.particules.push( m )
-    //   this.add( m )
-    // }
-    this.resize = this.resize.bind( this )
-    this.animate = this.animate.bind( this )
-    dom.events.on( window, 'click', this.animate )
   }
   animate () {
-    console.log( this.uniforms.uColor.value )
-    // TweenMax.to( this.uniforms.uStrokeInner, 1, {
-    //   value: 5,
-    //   ease: Back.easeOut
-    // } )
+    if ( !this.INTERACTIVE ) return
+    this.INTERACTIVE = false
+    const success = new THREE.Color( 0x00ff00 )
+    const tl = new TimelineMax()
+    tl.to( this.uniforms.uColor.value, 0.3, {
+      r: success.r,
+      g: success.g,
+      b: success.b,
+      ease: Sine.easeOut
+    }, 0 )
+    tl.to( this.scale, 0.3, {
+      x: 1.5,
+      y: 1.5,
+      z: 1.5,
+      ease: Expo.easeOut
+    }, 0 )
+    tl.to( this.uniforms.uOpacity, 0.3, {
+      value: 0,
+      ease: Expo.easeOut
+    }, 0.1 )
+  }
+  reset () {
+    this.INTERACTIVE = true
+    this.uniforms.uColor.value = new THREE.Color( 0xffffff )
+    this.uniforms.uOpacity.value = 1
+    this.scale.set( 1, 1, 1 )
   }
   update ( d ) {
     this.uniforms.uTime.value += d * 0.005
+    this.position.z += d * SPEED
   }
   resize () {
     this.uniforms.uResolution.value.x = Window.w
@@ -167,11 +170,16 @@ class Checkpoint extends THREE.Object3D {
 class Kyogre extends THREE.Object3D {
   constructor () {
     super()
+    // const boudingsGeo = new THREE.BoxGeometry( 20, 20, 20 )
+    // const boundingsMat = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } )
+    // const boudingsMesh = new THREE.Mesh( boudingsGeo, boundingsMat )
+    // this.add( boudingsMesh )
     const loader = new THREE.OBJLoader()
     loader.load( 'assets/kyogre.obj', ( obj ) => {
       this.object = obj
       this.mapTextures( ( texture, texture2 ) => {
         const mesh = this.object.children[0]
+        mesh.name = 'kyogre'
         mesh.material[0].map = texture
         mesh.material[1].map = texture
         mesh.material[2].map = texture2
@@ -240,7 +248,7 @@ class Kyogre extends THREE.Object3D {
 
       this.rotation.z = -Mouse.nX * 0.9
       this.rotation.x = Mouse.nY * 0.6
-      const xDistance = Mouse.nX * 40 - this.position.x
+      const xDistance = Mouse.nX * 50 - this.position.x
       const yDistance = Mouse.nY * 40 - this.position.y
       const distance = Math.sqrt( xDistance * xDistance + yDistance * yDistance )
       if ( distance > 1 ) {
@@ -256,16 +264,26 @@ class Xp {
     this.scene = new THREE.Scene()
     this.scene.fog = new THREE.Fog( 0x190254, 1, 300 )
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
-    this.camera.position.z = 100
+    // this.camera.position.z = 100
+    this.camera.position.set( 0, 0, 100 )
+    // this.camera.rotation.x = 5 * Math.PI / 180
+    // this.camera.lookAt( new THREE.Vector3() )
     this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setClearColor( 0x190254 )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
 
+    this.READY = false
     this.DELTA_TIME = 0
     this.LAST_TIME = Date.now()
 
+    this.CHECKPOINTS_COUNT = 5
+
+    this.raycaster = new THREE.Raycaster()
+    this.raycaster.far = 100
+    this.mouse = new THREE.Vector2()
+    this.intersectables = []
     this.bind()
     this.initLights()
     this.initMeshes()
@@ -280,8 +298,18 @@ class Xp {
     this.terrain = new Terrain()
     this.scene.add( this.kyogre )
     this.scene.add( this.terrain )
-    this.checkpoint = new Checkpoint()
-    this.scene.add( this.checkpoint )
+    this.checkpoints = []
+    for ( let i = 0; i < this.CHECKPOINTS_COUNT; i++ ) {
+      const checkpoint = new Checkpoint( i )
+      checkpoint.position.set(
+        randomInRange( -30, 30 ),
+        randomInRange( -25, 25 ),
+        -( 1000 + i * 500 )
+      )
+      this.checkpoints.push( checkpoint )
+      this.scene.add( checkpoint )
+      this.intersectables.push( checkpoint )
+    }
   }
   initLights () {
     const ambientLight = new THREE.AmbientLight( 0x999999 )
@@ -299,17 +327,39 @@ class Xp {
     const axisHelper = new THREE.AxisHelper( 10 )
     this.scene.add( axisHelper )
   }
+  checkCollision () {
+    const intersects = this.raycaster.intersectObjects( this.intersectables, true )
+    for ( let i = 0; i < intersects.length; i++ ) {
+      let intersect = intersects[ i ]
+      if ( intersect ) intersect.object.animate()
+    }
+  }
   update () {
+    this.mouse.x = Mouse.nX
+    this.mouse.y = Mouse.nY
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
     this.kyogre.update( this.DELTA_TIME )
     this.terrain.update()
 
-    this.checkpoint.update( this.DELTA_TIME )
+    if ( this.READY ) {
+      this.raycaster.setFromCamera( this.mouse, this.camera )
+      for ( const checkpoint of this.checkpoints ) {
+        if ( checkpoint.position.z > 200 ) {
+          SPEED += 0.005
+          checkpoint.reset()
+          checkpoint.position.z = this.checkpoints[ this.CHECKPOINTS_COUNT - 1 ].position.z - 500
+          this.checkpoints.push( this.checkpoints.shift() )
+        }
+        checkpoint.update( this.DELTA_TIME )
+      }
+      this.checkCollision()
+    }
     this.renderer.render( this.scene, this.camera )
   }
   onClick () {
     this.kyogre.spinMove()
+    this.READY = true
   }
   resize () {
     this.checkpoint.resize()
