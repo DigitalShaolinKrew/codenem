@@ -193,8 +193,6 @@ class Particles extends THREE.Object3D {
     const context = canvas.getContext( '2d' )
     const gradient = context.createRadialGradient( canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2 )
     gradient.addColorStop( 0, 'rgba(255,255,255,1)' )
-    gradient.addColorStop( 0.2, 'rgba(0,255,255,1)' )
-    gradient.addColorStop( 0.4, 'rgba(0,0,0,1)' )
     gradient.addColorStop( 1, 'rgba(0,0,0,1)' )
     context.fillStyle = gradient
     context.fillRect( 0, 0, canvas.width, canvas.height )
@@ -305,10 +303,10 @@ class Kyogre extends THREE.Object3D {
   update ( delta ) {
     if ( this.object ) {
       // this.object.position.y = Math.sin( delta / 1000 ) * 10
-
+      const dir = this.reversed ? -1 : 1
       this.rotation.z = -Mouse.nX * 0.9
       this.rotation.x = Mouse.nY * 0.6
-      const xDistance = Mouse.nX * 50 - this.position.x
+      const xDistance = Mouse.nX * 50 * dir - this.position.x
       const yDistance = Mouse.nY * 40 - this.position.y
       const distance = Math.sqrt( xDistance * xDistance + yDistance * yDistance )
       if ( distance > 1 ) {
@@ -325,10 +323,14 @@ class Xp {
     this.scene.fog = new THREE.Fog( 0x190254, 1, 300 )
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
     // this.camera.position.z = 100
+    this.cameraContainer = new THREE.Object3D()
     this.camera.position.set( 0, 0, 100 )
+    this.cameraContainer.add( this.camera )
+    this.scene.add( this.cameraContainer )
+
     // this.camera.rotation.x = 5 * Math.PI / 180
     // this.camera.lookAt( new THREE.Vector3() )
-    this.controls = new THREE.OrbitControls( this.camera )
+    // this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setClearColor( 0x190254 )
     this.renderer.setSize( Window.w, Window.h )
@@ -350,7 +352,7 @@ class Xp {
     this.addHelpers()
   }
   bind () {
-    [ 'update', 'resize' ]
+    [ 'update', 'resize', 'rotateCamera' ]
       .forEach( ( fn ) => this[ fn ] = this[ fn ].bind( this ) )
   }
   initMeshes () {
@@ -373,6 +375,21 @@ class Xp {
     }
     this.scene.add( this.particles )
   }
+
+  rotateCamera () {
+    if ( !this.animating ) {
+      this.animating = true
+      TweenMax.to( this.cameraContainer.rotation, 3, {
+        y: '+=' + Math.PI,
+        ease: Power3.easeInOut,
+        onComplete: () => {
+          this.kyogre.reversed = !this.kyogre.reversed
+          this.animating = false
+        }
+      } )
+    }
+  }
+
   initLights () {
     const light = new THREE.DirectionalLight( 0xffffff, 1.2 )
     light.position.set( 1, 1, 1 )
@@ -398,7 +415,9 @@ class Xp {
     this.mouse.y = Mouse.nY
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
-    this.kyogre.update( this.DELTA_TIME )
+    if ( !this.animating ) {
+      this.kyogre.update( this.DELTA_TIME )
+    }
     this.terrain.update()
 
     if ( this.READY ) {
