@@ -7,7 +7,7 @@
   <title>Codenem</title>
 </head>
 <body>
-  <div class="loader">
+  <div class="loader loader--hidden">
     <div class="loader__progress">
       <div class="loader__progress__bar"></div>
     </div>  
@@ -163,6 +163,39 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>
   <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/127738/OrbitControls.js"></script>
   <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+  <script type="x-shader/vertex-shader" id="checkpointVertex">
+    precision mediump float;
+    varying vec2 vPos;
+    void main() {
+      vPos = position.xy;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }
+  </script>
+  <script type="x-shader/fragment-shader" id="checkpointFragment">
+    precision mediump float;
+    varying vec2 vPos;
+    uniform float uTime;
+    uniform float uRadiusOuter;
+    uniform float uStrokeOuter;
+    uniform float uShift;
+    uniform float uStrokeInner;
+    uniform vec3 uColor;
+    
+    float map( float value, float low1, float high1, float low2, float high2 ) {
+      return low2 + ( value - low1 ) * ( high2 - low2 ) / ( high1 - low1 );      
+    }
+    
+    void main() {
+      float radiusInner = uRadiusOuter - uStrokeOuter - uShift;
+      float d = distance( vPos.xy, vec2( .5 ) );
+      float alphaShift = map( sin( uTime ), -1., 1., 5., 30. );
+      float a = 0.3 - map( d, ( uRadiusOuter - uStrokeOuter ) - alphaShift, uRadiusOuter, 0., 0.3 );
+      //float strokeInner = uStrokeInner + 0.5 * ( 0.5 + sin( uTime ) * 0.5 );
+      if ( d <= uRadiusOuter && d > uRadiusOuter - uStrokeOuter ) gl_FragColor = vec4( uColor, a );
+      else if ( d <= radiusInner && d > radiusInner - uStrokeInner ) gl_FragColor = vec4( uColor, 1. );
+      else discard;
+    }
+  </script>
   <script src="app.bundle.js"></script>
   
 </body>

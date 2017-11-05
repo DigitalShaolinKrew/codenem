@@ -51,6 +51,75 @@ class Terrain extends THREE.Object3D {
     this.add( this.mesh )
   }
 }
+class Checkpoint extends THREE.Object3D {
+  constructor () {
+    super()
+
+    this.geometry = new THREE.PlaneBufferGeometry( 100, 100 )
+    this.uniforms = {
+      uResolution: { value: new THREE.Vector2() },
+      uTime: { value: 0 },
+      uRadiusOuter: { value: 40 },
+      uStrokeOuter: { value: 10 },
+      uStrokeInner: { value: 0.5 },
+      uShift: { value: 1 },
+      uColor: { value: new THREE.Color( 0xffffff ) }
+    }
+    this.material = new THREE.ShaderMaterial( {
+      uniforms: this.uniforms,
+      vertexShader: dom.select.one( '#checkpointVertex' ).textContent,
+      fragmentShader: dom.select.one( '#checkpointFragment' ).textContent,
+      side: THREE.DoubleSide,
+      transparent: true
+    } )
+    this.mesh = new THREE.Mesh( this.geometry, this.material )
+    this.add( this.mesh )
+    // const tetra = new THREE.DodecahedronGeometry( 2, 0 )
+    // const material = new THREE.MeshStandardMaterial( {
+    //   color: 0xffffff,
+    //   emissive: 0xff0000,
+    //   metalness: 0.2,
+    //   roughness: 0.4,
+    //   flatShading: true
+    // } )
+    // const mesh = new THREE.Mesh( tetra, material )
+    // const radius = ( this.uniforms.uRadiusOuter.value - this.uniforms.uStrokeOuter.value )
+    // this.particules = []
+    // for ( let i = 0; i < 10; i++ ) {
+    //   const m = mesh.clone()
+    //   const a = Math.random() * 2 * Math.PI
+    //   const shift = 5 * Math.random()
+    //   m.position.set(
+    //     Math.cos( a ) * ( radius + shift ),
+    //     Math.sin( a ) * ( radius + shift ),
+    //     15 * Math.sin( shift )
+    //   )
+    //   m.end = {
+    //     x: Math.cos( a ) * radius * 1.5,
+    //     y: Math.sin( a ) * radius * 1.5
+    //   }
+    //   this.particules.push( m )
+    //   this.add( m )
+    // }
+    this.resize = this.resize.bind( this )
+    this.animate = this.animate.bind( this )
+    dom.events.on( window, 'click', this.animate )
+  }
+  animate () {
+    console.log( this.uniforms.uColor.value )
+    // TweenMax.to( this.uniforms.uStrokeInner, 1, {
+    //   value: 5,
+    //   ease: Back.easeOut
+    // } )
+  }
+  update ( d ) {
+    this.uniforms.uTime.value += d * 0.005
+  }
+  resize () {
+    this.uniforms.uResolution.value.x = Window.w
+    this.uniforms.uResolution.value.y = Window.h
+  }
+}
 
 class Kyogre extends THREE.Object3D {
   constructor () {
@@ -147,6 +216,7 @@ class Xp {
     this.camera.position.z = 100
     this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
+    this.renderer.setClearColor( 0x222222 )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
 
@@ -167,6 +237,8 @@ class Xp {
     this.terrain = new Terrain()
     this.scene.add( this.kyogre )
     this.scene.add( this.terrain )
+    this.checkpoint = new Checkpoint()
+    this.scene.add( this.checkpoint )
   }
   initLights () {
     const ambientLight = new THREE.AmbientLight( 0x999999 )
@@ -189,12 +261,14 @@ class Xp {
     this.LAST_TIME = Date.now()
     this.kyogre.update( this.DELTA_TIME )
 
+    this.checkpoint.update( this.DELTA_TIME )
     this.renderer.render( this.scene, this.camera )
   }
   onClick () {
     this.kyogre.spinMove()
   }
   resize () {
+    this.checkpoint.resize()
     this.camera.aspect = Window.w / Window.h
     this.camera.updateProjectionMatrix()
     this.renderer.setSize( Window.w, Window.h )
