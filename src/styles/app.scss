@@ -54,7 +54,7 @@ html, body {
   position: absolute;
   right: 20px;
   bottom: 20px;
-  color: $BLACK;
+  color: $WHITE;
   text-align: right;
   font-family: 'Oswald';
   
@@ -68,7 +68,7 @@ html, body {
   &__link {
     text-decoration: none;
     font-weight: 300;
-    color: $BLACK;
+  color: $WHITE;
     font-size: 1.3rem;
     position: relative;
 
@@ -79,7 +79,7 @@ html, body {
       left: 0;
       width: 100%;
       height: 1px;
-      background-color: $BLACK;
+      background-color: $WHITE;
       transform-origin: 100% 50%;
       transform: scale( 0 );
       transition: transform 0.2s $easeOutSine;

@@ -21,34 +21,77 @@ class Loader {
 class Terrain extends THREE.Object3D {
   constructor () {
     super()
-    const baseShader = THREE.ShaderLib.phong
-    const baseUniforms = THREE.UniformsUtils.clone( baseShader.uniforms )
-    const bumpTexture = new THREE.TextureLoader().load( 'assets/heightmap.png' )
-    bumpTexture.wrapS = bumpTexture.wrapT = THREE.RepeatWrapping
-    const bumpScale = 100.0
-    this.customUniforms = THREE.UniformsUtils.merge( [
-      baseUniforms,
-      {
-        bumpTexture: { type: 't', value: bumpTexture },
-        bumpScale: { type: 'f', value: bumpScale }
+    this.geometry = new THREE.SphereGeometry( 500, 128, 128 )
+    const loader = new THREE.ImageLoader()
+    loader.load( 'assets/heightmap.png', ( img ) => {
+      console.log( this.geometry.vertices )
+
+      const canvas = document.createElement( 'canvas' )
+      canvas.width = img.width
+      canvas.height = img.height
+      canvas.getContext( '2d' ).drawImage( img, 0, 0, img.width, img.height )
+      for ( let i = 0, l = this.geometry.vertices.length; i < l; i++ ) {
+        var dir = this.position2Dir( this.geometry.vertices[i] )
+        var h = this.getH( dir, canvas )
+        var vector = new THREE.Vector3()
+        vector.set( this.geometry.vertices[i].x, this.geometry.vertices[i].y, this.geometry.vertices[i].z )
+        vector.setLength( h )
+        this.geometry.vertices[i].x = vector.x
+        this.geometry.vertices[i].y = vector.y
+        this.geometry.vertices[i].z = vector.z
       }
-    ] )
-    this.geometry = new THREE.PlaneGeometry( 1000, 1000, 120, 120 )
-    console.log( dom.select.one( '#terrainVertexShader' ) )
-    this.material = new THREE.ShaderMaterial(
-      {
-        uniforms: this.customUniforms,
-        vertexShader: dom.select.one( '#terrainVertexShader' ).textContent,
-        fragmentShader: dom.select.one( '#terrainFragmentShader' ).textContent,
-        side: THREE.DoubleSide,
-        blending: THREE.NormalBlending,
-        lights: true,
-        fog: true
-      } )
-    this.mesh = new THREE.Mesh( this.geometry, this.material )
-    this.mesh.rotation.x = -Math.PI / 2
-    this.mesh.position.y = -100
-    this.add( this.mesh )
+      this.geometry.computeFaceNormals()
+      this.geometry.computeVertexNormals()
+      this.material = new THREE.MeshPhongMaterial( { color: 0x000022 } )
+      this.mesh = new THREE.Mesh( this.geometry, this.material )
+      this.mesh.rotation.z = -Math.PI / 2
+      this.mesh.position.y = -240
+      this.mesh.position.z = -120
+      this.add( this.mesh )
+    } )
+  }D
+
+  getH ( dir, canvas ) {
+    dir.az = 360 - dir.az + 180
+    dir.az = dir.az % 360
+    var x = Math.floor( canvas.width * dir.az / 360 )
+    var y = Math.floor( canvas.height * ( dir.h + 90 ) / 180 )
+    var pixelData = canvas.getContext( '2d' ).getImageData( x, y, 1, 1 ).data
+    var h = 200 + pixelData[0] / 5
+    return h
+  }
+
+  position2Dir ( position ) {
+    let az = null
+    let h = null
+
+    const vector = new THREE.Vector3( position.x, position.y, position.z )
+    const length = vector.length()
+
+    const hd = Math.sqrt( Math.pow( position.x, 2 ) + Math.pow( position.z, 2 ) ) / length
+
+    h = Math.atan( ( position.y / length ) / hd ) / Math.PI * 180
+    h *= -1
+
+    az = Math.atan( ( position.z / hd ) / ( position.x / hd ) )
+    if ( position.x < 0 && position.z > 0 ) az = Math.PI + az
+    if ( position.x < 0 && position.z < 0 ) az = Math.PI + az
+    if ( position.x > 0 && position.z < 0 ) az = Math.PI * 2 + az
+
+    az = az / Math.PI * 180
+
+    if ( isNaN( az ) ) az = 0
+
+    return {
+      az: az,
+      h: h
+    }
+  }
+
+  update ( t ) {
+    if ( this.mesh ) {
+      this.mesh.rotation.x += 0.005
+    }
   }
 }
 class Checkpoint extends THREE.Object3D {
@@ -211,12 +254,12 @@ class Kyogre extends THREE.Object3D {
 class Xp {
   constructor () {
     this.scene = new THREE.Scene()
-    // this.scene.fog = 
+    this.scene.fog = new THREE.Fog( 0x190254, 1, 300 )
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
     this.camera.position.z = 100
     this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
-    this.renderer.setClearColor( 0x222222 )
+    this.renderer.setClearColor( 0x190254 )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
 
@@ -244,11 +287,11 @@ class Xp {
     const ambientLight = new THREE.AmbientLight( 0x999999 )
     this.scene.add( ambientLight )
 
-    const light = new THREE.DirectionalLight( 0x00004f )
+    const light = new THREE.DirectionalLight( 0xffffff )
     light.position.set( 1, 1, 1 )
     this.scene.add( light )
 
-    const light2 = new THREE.DirectionalLight( 0x00004f )
+    const light2 = new THREE.DirectionalLight( 0xffffff )
     light2.position.set( -1, -1, -1 )
     this.scene.add( light2 )
   }
@@ -260,6 +303,7 @@ class Xp {
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
     this.kyogre.update( this.DELTA_TIME )
+    this.terrain.update()
 
     this.checkpoint.update( this.DELTA_TIME )
     this.renderer.render( this.scene, this.camera )
