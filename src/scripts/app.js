@@ -50,8 +50,8 @@ class Terrain extends THREE.Object3D {
       this.material = new THREE.MeshPhongMaterial( { color: 0x000022 } )
       this.mesh = new THREE.Mesh( this.geometry, this.material )
       this.mesh.rotation.z = -Math.PI / 2
-      this.mesh.position.y = -240
-      this.mesh.position.z = -120
+      this.mesh.position.y = -260
+      this.mesh.position.z = -50
       this.add( this.mesh )
     } )
   }D
@@ -167,6 +167,58 @@ class Checkpoint extends THREE.Object3D {
   }
 }
 
+class Particles extends THREE.Object3D {
+  constructor () {
+    super()
+    this.material = new THREE.SpriteMaterial( {
+      map: new THREE.CanvasTexture( this.generateTexture() ),
+      blending: THREE.AdditiveBlending
+    } )
+    this.array = []
+    for ( let i = 0; i < 1000; i++ ) {
+      const particle = new THREE.Sprite( this.material )
+      particle.scale.x = particle.scale.y = Math.random() * 1 + 0.1
+      particle.position.set( ( Math.random() * 250 - 125 ), ( Math.random() * 250 - 125 ), ( Math.random() * 100 - 50 ) )
+      this.array.push( particle )
+      this.add( particle )
+    }
+
+    this.rotation.x = Math.PI / 2
+  }
+
+  generateTexture () {
+    const canvas = document.createElement( 'canvas' )
+    canvas.width = 16
+    canvas.height = 16
+    const context = canvas.getContext( '2d' )
+    const gradient = context.createRadialGradient( canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2 )
+    gradient.addColorStop( 0, 'rgba(255,255,255,1)' )
+    gradient.addColorStop( 0.2, 'rgba(0,255,255,1)' )
+    gradient.addColorStop( 0.4, 'rgba(0,0,0,1)' )
+    gradient.addColorStop( 1, 'rgba(0,0,0,1)' )
+    context.fillStyle = gradient
+    context.fillRect( 0, 0, canvas.width, canvas.height )
+    return canvas
+  }
+
+  update () {
+    if ( this.array ) {
+      for ( let i = 0; i < this.array.length; i++ ) {
+        const particle = this.array[i]
+        particle.position.x += ( Math.random() * 0.2 - 0.1 ) / 1
+        // particle.position.z -= ( ( Math.random() * 5 ) + 1 )
+        particle.position.y += ( ( Math.random() * 1 ) + 0.5 )
+
+        if ( particle.position.y > 80 ) {
+          // particle.position.x = -10
+          particle.position.y = -150
+          // particle.position.z = -10
+        }
+      }
+    }
+  }
+}
+
 class Kyogre extends THREE.Object3D {
   constructor () {
     super()
@@ -193,6 +245,8 @@ class Kyogre extends THREE.Object3D {
         this.add( this.object )
       } )
     } )
+    const light = new THREE.PointLight( 0xff0000, 10, 100, 2 )
+    this.add( light )
 
     this.bind()
   }
@@ -296,6 +350,7 @@ class Xp {
   initMeshes () {
     this.kyogre = new Kyogre()
     this.terrain = new Terrain()
+    this.particles = new Particles()
     this.scene.add( this.kyogre )
     this.scene.add( this.terrain )
     this.checkpoints = []
@@ -310,16 +365,14 @@ class Xp {
       this.scene.add( checkpoint )
       this.intersectables.push( checkpoint )
     }
+    this.scene.add( this.particles )
   }
   initLights () {
-    const ambientLight = new THREE.AmbientLight( 0x999999 )
-    this.scene.add( ambientLight )
-
-    const light = new THREE.DirectionalLight( 0xffffff )
+    const light = new THREE.DirectionalLight( 0xffffff, 1.2 )
     light.position.set( 1, 1, 1 )
     this.scene.add( light )
 
-    const light2 = new THREE.DirectionalLight( 0xffffff )
+    const light2 = new THREE.DirectionalLight( 0xffffff, 1.2 )
     light2.position.set( -1, -1, -1 )
     this.scene.add( light2 )
   }
@@ -355,6 +408,7 @@ class Xp {
       }
       this.checkCollision()
     }
+    this.particles.update()
     this.renderer.render( this.scene, this.camera )
   }
   onClick () {
