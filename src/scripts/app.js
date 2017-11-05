@@ -205,8 +205,8 @@ class Particles extends THREE.Object3D {
     if ( this.array ) {
       for ( let i = 0; i < this.array.length; i++ ) {
         const particle = this.array[i]
-        particle.position.x += ( Math.random() * 0.2 - 0.1 ) / i * Math.sin( delta / 2 ) * 3
-        particle.position.z += ( ( Math.random() * 5 ) + 1 ) / i * Math.cos( delta / 2 ) * 3
+        particle.position.x += ( Math.random() * 0.2 - 0.1 ) / i * Math.sin( delta / 10 ) * 5
+        particle.position.z += ( ( Math.random() * 5 ) + 1 ) / i * Math.cos( delta / 10 ) * 3
         particle.position.y += ( ( Math.random() * 1 ) + 0.5 )
 
         if ( particle.position.y > 100 ) {
