@@ -175,7 +175,7 @@ class Particles extends THREE.Object3D {
       blending: THREE.AdditiveBlending
     } )
     this.array = []
-    for ( let i = 0; i < 1000; i++ ) {
+    for ( let i = 0; i < 200; i++ ) {
       const particle = new THREE.Sprite( this.material )
       particle.scale.x = particle.scale.y = Math.random() * 1 + 0.1
       particle.position.set( ( Math.random() * 250 - 125 ), ( Math.random() * 250 - 125 ), ( Math.random() * 100 - 50 ) )
@@ -201,17 +201,23 @@ class Particles extends THREE.Object3D {
     return canvas
   }
 
-  update () {
+  update ( delta ) {
     if ( this.array ) {
       for ( let i = 0; i < this.array.length; i++ ) {
         const particle = this.array[i]
-        particle.position.x += ( Math.random() * 0.2 - 0.1 ) / 1
-        // particle.position.z -= ( ( Math.random() * 5 ) + 1 )
+        particle.position.x += ( Math.random() * 0.2 - 0.1 ) / i * Math.sin( delta / 2 ) * 3
+        particle.position.z += ( ( Math.random() * 5 ) + 1 ) / i * Math.cos( delta / 2 ) * 3
         particle.position.y += ( ( Math.random() * 1 ) + 0.5 )
 
-        if ( particle.position.y > 80 ) {
+        if ( particle.position.y > 100 ) {
           // particle.position.x = -10
           particle.position.y = -150
+          // particle.position.z = -10
+        }
+
+        if ( particle.position.z < -40 ) {
+          // particle.position.x = -10
+          particle.position.z = 20
           // particle.position.z = -10
         }
       }
@@ -408,7 +414,7 @@ class Xp {
       }
       this.checkCollision()
     }
-    this.particles.update()
+    this.particles.update( this.DELTA_TIME )
     this.renderer.render( this.scene, this.camera )
   }
   onClick () {
