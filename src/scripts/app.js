@@ -7,44 +7,30 @@ const Window = { w: window.innerWidth, h: window.innerHeight }
 class Plane extends THREE.Object3D {
   constructor () {
     super()
-    // const points = []
-    // for ( let i = 0; i < 5; i += 1 ) {
-    //   points.push( new THREE.Vector3( 0, 0, 45 * i ) )
-    // }
-
-    // const curve = new THREE.CatmullRomCurve3( points )
-    // this.geometry = new THREE.TubeBufferGeometry( curve, 50, 40, 50, false )
     this.geometry = new THREE.PlaneBufferGeometry( 100, 100, 16, 16 )
     this.uniforms = {
       uTime: { value: 0 },
       uResolution: { value: new THREE.Vector2() },
-      uColor: { value: new THREE.Color( 0xff0000 ) }
+      uColor1: { value: new THREE.Color( 0xE563E5 ) },
+      uColor2: { value: new THREE.Color( 0x2AEBEC ) }
     }
     this.material = new THREE.ShaderMaterial( {
       uniforms: this.uniforms,
       vertexShader: dom.select.one( '#cloudVertex' ).textContent,
-      fragmentShader: dom.select.one( '#cloudFragment' ).textContent,
-      side: THREE.DoubleSide
+      fragmentShader: dom.select.one( '#cloudFragment' ).textContent
     } )
-    // this.material = new THREE.MeshBasicMaterial( {
-    //   color: 0xff0000,
-    //   side: THREE.DoubleSide
-    // } )
     this.mesh = new THREE.Mesh( this.geometry, this.material )
-    // this.mesh.position.z = -80
-    // this.mesh.rotation.x = -90 * Math.PI / 180
     this.add( this.mesh )
+    this.resize()
     this.update = this.update.bind( this )
     this.resize = this.resize.bind( this )
   }
   update ( d ) {
     this.uniforms.uTime.value += d * 0.001
-    // this.rotation.y += 0.01
-    // this.rotation.z += 0.01
   }
   resize () {
-    this.uniforms.uResolution.x = Window.w
-    this.uniforms.uResolution.y = Window.h
+    this.uniforms.uResolution.value.x = Window.w
+    this.uniforms.uResolution.value.y = Window.h
   }
 }
 
@@ -52,8 +38,7 @@ class Xp {
   constructor () {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
-    this.camera.position.z = 100
-    this.controls = new THREE.OrbitControls( this.camera )
+    this.camera.position.z = 50
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
