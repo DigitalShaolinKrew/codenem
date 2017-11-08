@@ -48,6 +48,27 @@ html, body {
     will-change: transform;
   }
 }
+
+.infos {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  width: 50%;
+  transform: translateX(-50%);
+  font-family: 'Oswald';
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.timer {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  color: $BLACK;
+  text-align: right;
+  font-family: 'Oswald';
+  font-size: 5rem;
+}
    
 
 .credits {

@@ -21,6 +21,7 @@ module.exports = {
     "dom": true,
     "raf": true,
     "THREE": true,
+    "OIMO": true,
     "TimelineLite": false,
     "TimelineMax": false,
     "TweenLite": false,
