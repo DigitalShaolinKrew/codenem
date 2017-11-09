@@ -21,20 +21,60 @@ class Loader {
 class Sphere extends THREE.Object3D {
   constructor () {
     super()
+    this.startTime = Date.now()
+    this.time = 0
+    this.toruses = []
+    const loader = new THREE.TextureLoader()
 
-    this.geometry = new THREE.SphereGeometry( 10, 16, 16 )
-    this.material = new THREE.MeshStandardMaterial( {
-      color: 0xff0000,
-      flatShading: true,
-      roughness: 0.5,
-      metalness: 0.6
+    loader.load( 'assets/gradient.png', ( t ) => {
+      const uniforms = {
+        time: { value: 1.0 },
+        resolution: { value: new THREE.Vector2() },
+        texture: { type: 't', value: t },
+        amount: { type: 'f', value: 0.05 }
+      }
+      this.geometry = new THREE.SphereGeometry( 30, 160, 160 )
+      this.material = new THREE.ShaderMaterial( {
+        uniforms: uniforms,
+        vertexShader: dom.select.one( '#vertexShader' ).textContent,
+        fragmentShader: dom.select.one( '#fragmentShader' ).textContent
+      } )
+      this.mesh = new THREE.Mesh( this.geometry, this.material )
+      this.add( this.mesh )
+      for ( let i = 1; i <= 2; i++ ) {
+        this.addTorus( t, 50 * i )
+      }
     } )
-    this.mesh = new THREE.Mesh( this.geometry, this.material )
-    this.add( this.mesh )
+  }
+
+  addTorus ( t, radius ) {
+    const uniforms = {
+      time: { value: 1.0 },
+      resolution: { value: new THREE.Vector2() },
+      texture: { type: 't', value: t },
+      amount: { type: 'f', value: 0.01 }
+    }
+    this.torusGeo = new THREE.TorusGeometry( radius, 5, 160, 160 )
+    const material = this.material
+    material.uniforms = uniforms
+    const torus = new THREE.Mesh( this.torusGeo, material )
+    this.add( torus )
+    this.toruses.push( torus )
   }
   update () {
-    this.rotation.y += 0.01
-    this.rotation.z += 0.01
+    if ( this.toruses.length ) {
+      this.time = 0.00025 * ( Date.now() - this.startTime )
+      this.mesh.rotation.y += 0.005
+      this.mesh.rotation.z += 0.005
+      this.material.uniforms['time'].value = this.time
+      for ( let i = this.toruses.length - 1; i > 0; i-- ) {
+        this.toruses[i].rotation.x += 0.01 * i / 2
+        this.toruses[i].rotation.y += 0.01 * i / 2
+        this.toruses[i].rotation.z += 0.01 * i / 2
+        this.toruses[i].material.uniforms['time'].value = this.time / i
+      }
+      this.rotation.y += 0.01
+    }
   }
 }
 
@@ -42,7 +82,7 @@ class Xp {
   constructor () {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
-    this.camera.position.z = 100
+    this.camera.position.z = 500
     this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
@@ -117,7 +157,7 @@ class App {
     Mouse.x = e.clientX || Mouse.x
     Mouse.y = e.clientY || Mouse.y
     Mouse.nX = ( Mouse.x / Window.w ) * 2 - 1
-    Mouse.nY = ( Mouse.y / Window.h ) * 2 + 1
+    Mouse.nY = -( Mouse.y / Window.h ) * 2 + 1
   }
   update () {
     this.xp.update()
