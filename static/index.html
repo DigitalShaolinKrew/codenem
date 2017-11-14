@@ -7,14 +7,10 @@
   <title>Codenem</title>
 </head>
 <body>
-  <div class="loader">
-    <div class="loader__progress">
-      <div class="loader__progress__bar"></div>
-    </div>  
-  </div>
   
   <div class="app"></div>
 
+  <p class="indications">Click to randomize color</p>
   <div class="credits">
     <h1 class="credits__title">shaolin405</h1>
     <p class="credits__wrapper">
@@ -23,6 +19,35 @@
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>
   <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/127738/OrbitControls.js"></script>
+  <script src="https://rawgit.com/spite/THREE.MeshLine/master/src/THREE.MeshLine.js"></script>
+  <script type="x-shader/vertex-shader" id="planeVertex">
+    varying vec3 vPosition;
+    void main() {
+      vPosition = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }
+  </script>
+  <script type="x-shader/fragment-shader" id="planeFragment">
+    precision highp float;
+    uniform vec2 uResolution;
+    uniform vec2 uMouse;
+    uniform vec3 uColor;
+    uniform float uTime;
+    uniform float uSpeed;
+    varying vec3 vPosition;
+    varying float vDisplacement;
+    void main() {
+      vec2 st = gl_FragCoord.xy/uResolution;
+      vec2 pos = uMouse-st;
+      float r = length(pos)*2.0;
+      float a = atan(pos.y,pos.x);
+      
+      float f = smoothstep( sin( -uSpeed * uTime + r * 5. ), 0.8, 0.0 );
+      f *= sin(length(pos) - .05);
+      vec3 color = mix( uColor, uColor * 1.5, f);
+      gl_FragColor = vec4( color, 1.0 );
+    }
+  </script>
   <script src="app.bundle.js"></script>
 </body>
 </html>

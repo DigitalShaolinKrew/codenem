@@ -21,6 +21,8 @@ module.exports = {
     "dom": true,
     "raf": true,
     "THREE": true,
+    "MeshLineMaterial": true,
+    "MeshLine": true,
     "TimelineLite": false,
     "TimelineMax": false,
     "TweenLite": false,

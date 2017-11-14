@@ -12,49 +12,28 @@ html, body {
   overflow: hidden;
   font-size: 62.5%;
 }
-  
- .loader {
-   @extend .center;
-   position: fixed;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%;
-   background-color: $BLACK;
-   z-index: 2;
-   
-   &--hidden {
-     display: none;
-     visibility: hidden;
-   }
- }
-    
 
-.loader__progress {
-  position: relative;
-  width: 15%;
-  height: 3px;
-  background-color: lighten( $BLACK, 10 );
-  z-index: 1;
-
-  &__bar {
-    position: absolute;
-    top:0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: $WHITE;
-    transform: scaleX( 0 );
-    will-change: transform;
-  }
+.app {
+  cursor: none;
 }
-   
+
+.indications {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX( -50% );
+  font-family: 'Oswald';
+  color: $WHITE;
+  text-transform: uppercase;
+  font-size: 1.2rem;
+  font-weight: 300;
+}
 
 .credits {
   position: absolute;
   right: 20px;
   bottom: 20px;
-  color: $BLACK;
+  color: $WHITE;
   text-align: right;
   font-family: 'Oswald';
   
@@ -68,7 +47,7 @@ html, body {
   &__link {
     text-decoration: none;
     font-weight: 300;
-    color: $BLACK;
+    color: $WHITE;
     font-size: 1.3rem;
     position: relative;
 
@@ -79,7 +58,7 @@ html, body {
       left: 0;
       width: 100%;
       height: 1px;
-      background-color: $BLACK;
+      background-color: $WHITE;
       transform-origin: 100% 50%;
       transform: scale( 0 );
       transition: transform 0.2s $easeOutSine;
