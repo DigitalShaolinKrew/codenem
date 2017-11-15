@@ -4,37 +4,32 @@ require( './utils' )
 const Mouse = { x: 0, y: 0, nX: 0, nY: 0 }
 const Window = { w: window.innerWidth, h: window.innerHeight }
 
-class Loader {
-  init () {
-    const loader = dom.select.one( '.loader' )
-    const progress = dom.select.one( '.loader__progress' )
-    const progressBar = dom.select.one( '.loader__progress__bar' )
-    this.tl = new TimelineMax( { delay: 0.3, onComplete: () => {
-      loader.classList.add( 'loader--hidden' )
-    } } )
-    this.tl.to( progressBar, 0.5, { scaleX: 1, transformOrigin: '0% 50%' } )
-    this.tl.to( progress, 0.2, { scaleX: 0, transformOrigin: '100% 50%' } )
-    this.tl.to( loader, 0.3, { opacity: 0, ease: Sine.easeOut }, '+=0.2' )
-  }
-}
-
 class Sphere extends THREE.Object3D {
   constructor () {
     super()
 
-    this.geometry = new THREE.SphereGeometry( 10, 16, 16 )
-    this.material = new THREE.MeshStandardMaterial( {
-      color: 0xff0000,
-      flatShading: true,
-      roughness: 0.5,
-      metalness: 0.6
+    this.geometry = new THREE.SphereBufferGeometry( 25, 64, 64 )
+    this.uniforms = {
+      uTime: { value: 0 },
+      uResolution: { value: new THREE.Vector2( Window.w, Window.h ) }
+    }
+    this.material = new THREE.ShaderMaterial( {
+      uniforms: this.uniforms,
+      transparent: true,
+      vertexShader: dom.select.one( '#planeVertex' ).textContent,
+      fragmentShader: dom.select.one( '#planeFragment' ).textContent
     } )
     this.mesh = new THREE.Mesh( this.geometry, this.material )
     this.add( this.mesh )
+    this.update = this.update.bind( this )
+    this.resize = this.resize.bind( this )
   }
-  update () {
-    this.rotation.y += 0.01
-    this.rotation.z += 0.01
+  update ( d ) {
+    this.uniforms.uTime.value += d * 0.0005
+  }
+  resize () {
+    this.uniforms.uResolution.value.x = Window.w
+    this.uniforms.uResolution.value.y = Window.h
   }
 }
 
@@ -76,12 +71,13 @@ class Xp {
     this.scene.add( light2 )
   }
   update () {
-    this.sphere.update()
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
+    this.sphere.update( this.DELTA_TIME )
     this.renderer.render( this.scene, this.camera )
   }
   resize () {
+    this.sphere.resize()
     this.camera.aspect = Window.w / Window.h
     this.camera.updateProjectionMatrix()
     this.renderer.setSize( Window.w, Window.h )
@@ -103,8 +99,6 @@ class App {
     dom.events.on( window, 'mousemove', this.onMouseMove )
   }
   init () {
-    this.loader = new Loader()
-    this.loader.init()
     this.update()
   }
   onResize () {
@@ -117,7 +111,7 @@ class App {
     Mouse.x = e.clientX || Mouse.x
     Mouse.y = e.clientY || Mouse.y
     Mouse.nX = ( Mouse.x / Window.w ) * 2 - 1
-    Mouse.nY = ( Mouse.y / Window.h ) * 2 + 1
+    Mouse.nY = -( Mouse.y / Window.h ) * 2 + 1
   }
   update () {
     this.xp.update()
