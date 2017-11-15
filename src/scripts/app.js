@@ -18,23 +18,34 @@ class Loader {
   }
 }
 
-class Sphere extends THREE.Object3D {
+class Plane extends THREE.Object3D {
   constructor () {
     super()
-
-    this.geometry = new THREE.SphereGeometry( 10, 16, 16 )
-    this.material = new THREE.MeshStandardMaterial( {
-      color: 0xff0000,
-      flatShading: true,
-      roughness: 0.5,
-      metalness: 0.6
+    this.vertex = dom.select.one( '#vertexShader' )
+    this.fragment = dom.select.one( '#fragmentShader' )
+    this.uniforms = {
+      uTime: { value: 0 },
+      uSpeed: { value: 10 },
+      uRadius: { value: 32 },
+      uWidth: { value: 0.9 },
+      uAngle: { value: 2 },
+      uColor: { value: new THREE.Color( 0xb0c4de ) },
+      uResolution: { value: new THREE.Vector2( Window.w, Window.h ) }
+    }
+    this.geometry = new THREE.PlaneBufferGeometry( 2, 2 )
+    this.material = new THREE.ShaderMaterial( {
+      uniforms: this.uniforms,
+      vertexShader: this.vertex.textContent,
+      fragmentShader: this.fragment.textContent,
+      side: THREE.DoubleSide
     } )
     this.mesh = new THREE.Mesh( this.geometry, this.material )
     this.add( this.mesh )
   }
-  update () {
-    this.rotation.y += 0.01
-    this.rotation.z += 0.01
+  update ( d ) {
+    this.uniforms.uTime.value += d * 0.0004
+    this.uniforms.uResolution.value.x = Window.w
+    this.uniforms.uResolution.value.y = Window.h
   }
 }
 
@@ -42,8 +53,8 @@ class Xp {
   constructor () {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
-    this.camera.position.z = 100
-    this.controls = new THREE.OrbitControls( this.camera )
+    this.camera.position.z = 1
+    // this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
@@ -60,8 +71,8 @@ class Xp {
       .forEach( ( fn ) => this[ fn ] = this[ fn ].bind( this ) )
   }
   initMeshes () {
-    this.sphere = new Sphere()
-    this.scene.add( this.sphere )
+    this.plane = new Plane()
+    this.scene.add( this.plane )
   }
   initLights () {
     const ambientLight = new THREE.AmbientLight( 0x111111 )
@@ -76,9 +87,10 @@ class Xp {
     this.scene.add( light2 )
   }
   update () {
-    this.sphere.update()
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
+    this.plane.update( this.DELTA_TIME )
+
     this.renderer.render( this.scene, this.camera )
   }
   resize () {

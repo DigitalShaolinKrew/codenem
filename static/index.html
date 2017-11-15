@@ -21,6 +21,48 @@
       <a href="https://twitter.com/avanderpotte" target="_blank" class="credits__link">avanderpotte</a> ☓ <a href="https://twitter.com/leixng" target="_blank" class="credits__link">leixng</a>
     </p>
   </div>
+
+  <script type="x-shader/x-vertex" id="vertexShader">
+
+    void main() {
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }
+  </script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+  precision highp float;
+  uniform vec2 uResolution;
+  uniform float uTime;
+  uniform float uRadius;
+  uniform float uWidth;
+  uniform float uAngle;
+  uniform vec3 uColor;
+  varying vec3 vPosition;
+  void main() {
+    vec2 uv = gl_FragCoord.xy / uResolution.xy - vec2(0.5,0.5);
+
+    uv.x *= uResolution.x/uResolution.y;
+    
+    float radius = sqrt(uv.x*uv.x + uv.y * uv.y);
+
+    float angle = atan(uv.y,uv.x);
+   
+    float radialIntensity = pow(sin(radius * uRadius ), 2.0);
+    
+    float angleIntensity = pow(sin(angle* uAngle + uRadius*uTime * 0.3 * sin(uRadius*radius)/abs(sin(uRadius*radius)) ) * uWidth + uWidth, 2.0);
+    
+    float finalIntensity = radialIntensity*angleIntensity * radius / 1.5;
+
+    //Create a base color
+    vec3 color = uColor;
+
+    color+=vec3(finalIntensity);
+    
+    //Set the final color
+    gl_FragColor = vec4(color, 1.0);
+  }
+</script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>
   <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/127738/OrbitControls.js"></script>
   <script src="app.bundle.js"></script>
