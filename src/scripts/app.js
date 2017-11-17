@@ -7,59 +7,35 @@ const Window = { w: window.innerWidth, h: window.innerHeight }
 class Orange extends THREE.Object3D {
   constructor () {
     super()
-
-    this.geometry = new THREE.Geometry()
-    const points = 300
-    // const vertices = new Float32Array( points * 3 )
-    // const A = 10
-    // const B = 10
-    // const N = 9 
-    // const NA = 2 / N
-    const RADIUS = 20
-    let angle = -Math.PI
-    const angleStep = ( Math.PI * 2 ) / points
-    for ( let i = 0; i < points; i++ ) {
-      const v = new THREE.Vector3(
-        RADIUS * Math.sin( 10 * angle ) * ( 1 + Math.cos( 0.5 * angle ) ),
-        RADIUS * Math.sin( 30 * angle + ( Math.PI * 2 ) / 3 ) * ( 1 + Math.cos( 0.15 * angle + ( Math.PI * 2 ) / 3 ) ),
-        RADIUS * Math.sin( 30 * angle + ( Math.PI * 4 ) / 3 ) * ( 1 + Math.cos( 0.35 * angle + ( Math.PI * 4 ) / 3 ) )
-      )
-      this.geometry.vertices.push( v )
-      // vertices[ i ] = v.x
-      // vertices[ i + 1 ] = v.y
-      // vertices[ i + 2 ] = v.z
-      angle += angleStep
-    }
-    // this.geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) )
+    this.geometry = new THREE.PlaneBufferGeometry( 10, 10, 64, 64 )
     this.uniforms = {
-      uTime: { value: 0 }
+      uTime: { value: 0 },
+      uColor: { value: new THREE.Color( 0xF2654C ) },
+      uColor2: { value: new THREE.Color( 0xE93C29 ) }
     }
-    // this.material = new THREE.ShaderMaterial( {
-    //   uniforms: this.uniforms,
-    //   vertexShader: dom.select.one( '#orangeVertex' ).textContent,
-    //   fragmentShader: dom.select.one( '#orangeFragment' ).textContent
-    // } )
-    this.material = new THREE.MeshBasicMaterial( {
-      color: 0xff0000,
-      metalness: 0.5,
-      roughness: 0.5
+    this.material = new THREE.ShaderMaterial( {
+      uniforms: this.uniforms,
+      vertexShader: dom.select.one( '#orangeVertex' ).textContent,
+      fragmentShader: dom.select.one( '#orangeFragment' ).textContent,
+      flatShading: THREE.FlatShading
     } )
-    this.mesh = new THREE.Line( this.geometry, this.material )
+    this.mesh = new THREE.Mesh( this.geometry, this.material )
     this.add( this.mesh )
+    this.update = this.update.bind( this )
   }
-  update = ( d ) => {
+  update ( d ) {
     this.uniforms.uTime.value += d * 0.001
-    // this.rotation.y += 0.01
-    // this.rotation.z += 0.01
+    this.rotation.y += d * 0.001
   }
 }
-
 class Xp {
   constructor () {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
     this.camera.position.z = 100
-    this.controls = new THREE.OrbitControls( this.camera )
+    this.controls = new THREE.TrackballControls( this.camera )
+    this.controls.noZoom = true
+    this.controls.noPan = true
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
@@ -68,7 +44,6 @@ class Xp {
     this.LAST_TIME = Date.now()
 
     this.bind()
-    this.initLights()
     this.initMeshes()
   }
   bind () {
@@ -79,19 +54,8 @@ class Xp {
     this.orange = new Orange()
     this.scene.add( this.orange )
   }
-  initLights () {
-    const ambientLight = new THREE.AmbientLight( 0x111111 )
-    this.scene.add( ambientLight )
-
-    const light = new THREE.DirectionalLight( 0x4f4f4f )
-    light.position.set( 1, 1, 1 )
-    this.scene.add( light )
-
-    const light2 = new THREE.DirectionalLight( 0x4f4f4f )
-    light2.position.set( -1, -1, -1 )
-    this.scene.add( light2 )
-  }
   update () {
+    this.controls.update()
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
     this.orange.update( this.DELTA_TIME )
