@@ -6,13 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Codenem</title>
 </head>
-<body>
-  <div class="loader">
-    <div class="loader__progress">
-      <div class="loader__progress__bar"></div>
-    </div>  
-  </div>
-  
+<body>  
   <div class="app"></div>
 
   <div class="credits">
@@ -23,6 +17,18 @@
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>
   <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/127738/OrbitControls.js"></script>
+  <script type="x-shader/vertex-shader" id="orangeVertex">
+    uniform float uTime;
+    void main() {
+      vec3 newPosition = position * abs( sin( uTime ) ) ;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }
+  </script>
+  <script type="x-shader/fragment-shader" id="orangeFragment">
+    void main() {
+      gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+    }
+  </script>
   <script src="app.bundle.js"></script>
 </body>
 </html>
