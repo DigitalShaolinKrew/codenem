@@ -4,37 +4,30 @@ require( './utils' )
 const Mouse = { x: 0, y: 0, nX: 0, nY: 0 }
 const Window = { w: window.innerWidth, h: window.innerHeight }
 
-class Loader {
-  init () {
-    const loader = dom.select.one( '.loader' )
-    const progress = dom.select.one( '.loader__progress' )
-    const progressBar = dom.select.one( '.loader__progress__bar' )
-    this.tl = new TimelineMax( { delay: 0.3, onComplete: () => {
-      loader.classList.add( 'loader--hidden' )
-    } } )
-    this.tl.to( progressBar, 0.5, { scaleX: 1, transformOrigin: '0% 50%' } )
-    this.tl.to( progress, 0.2, { scaleX: 0, transformOrigin: '100% 50%' } )
-    this.tl.to( loader, 0.3, { opacity: 0, ease: Sine.easeOut }, '+=0.2' )
-  }
-}
-
-class Sphere extends THREE.Object3D {
+class Plane extends THREE.Object3D {
   constructor () {
     super()
-
-    this.geometry = new THREE.SphereGeometry( 10, 16, 16 )
-    this.material = new THREE.MeshStandardMaterial( {
-      color: 0xff0000,
-      flatShading: true,
-      roughness: 0.5,
-      metalness: 0.6
+    this.geometry = new THREE.PlaneBufferGeometry( 10, 10 )
+    this.uniforms = {
+      uTime: { value: 0 },
+      uResolution: { value: new THREE.Vector2( Window.w, Window.h ) }
+    }
+    this.material = new THREE.ShaderMaterial( {
+      uniforms: this.uniforms,
+      vertexShader: dom.select.one( '#iceVertex' ).textContent,
+      fragmentShader: dom.select.one( '#iceFragment' ).textContent,
+      side: THREE.DoubleSide
     } )
     this.mesh = new THREE.Mesh( this.geometry, this.material )
     this.add( this.mesh )
+    this.update = this.update.bind( this )
   }
-  update () {
-    this.rotation.y += 0.01
-    this.rotation.z += 0.01
+  update ( d ) {
+    this.uniforms.uTime.value += d * 0.001
+    this.uniforms.uResolution.value.x = Window.w
+    this.uniforms.uResolution.value.y = Window.h
+    // this.rotation.y += 0.01
+    // this.rotation.z += 0.01
   }
 }
 
@@ -42,8 +35,8 @@ class Xp {
   constructor () {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
-    this.camera.position.z = 100
-    this.controls = new THREE.OrbitControls( this.camera )
+    this.camera.position.z = 1
+    // this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
@@ -60,8 +53,8 @@ class Xp {
       .forEach( ( fn ) => this[ fn ] = this[ fn ].bind( this ) )
   }
   initMeshes () {
-    this.sphere = new Sphere()
-    this.scene.add( this.sphere )
+    this.plane = new Plane()
+    this.scene.add( this.plane )
   }
   initLights () {
     const ambientLight = new THREE.AmbientLight( 0x111111 )
@@ -76,9 +69,9 @@ class Xp {
     this.scene.add( light2 )
   }
   update () {
-    this.sphere.update()
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
+    this.plane.update( this.DELTA_TIME )
     this.renderer.render( this.scene, this.camera )
   }
   resize () {
@@ -103,8 +96,6 @@ class App {
     dom.events.on( window, 'mousemove', this.onMouseMove )
   }
   init () {
-    this.loader = new Loader()
-    this.loader.init()
     this.update()
   }
   onResize () {
