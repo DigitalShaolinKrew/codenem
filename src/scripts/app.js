@@ -9,13 +9,13 @@ class Physics {
     this.meshes = []
     this.config = [
       1, // The density of the shape.
-      0.4, // The coefficient of friction of the shape.
+      0.3, // The coefficient of friction of the shape.
       0.2, // The coefficient of restitution of the shape.
       1, // The bits of the collision groups to which the shape belongs.
       0xffffffff // The bits of the collision groups with which the shape collides.
     ]
     this.world = new OIMO.World( { info: true, worldscale: 100 } )
-    this.world.gravity = new OIMO.Vec3( 0, -10, 0 )
+    this.world.gravity = new OIMO.Vec3( 0, -5, 0 )
     this.ground = this.world.add( { size: [ 500, 10, 500 ], pos: [ 0, 0, 0 ], rot: [ 0, 0, 0 ], config: this.config } )
     this.groundMesh = new THREE.Mesh( new THREE.PlaneGeometry( 500, 500 ), new THREE.MeshPhongMaterial( {
       color: 0xFFFFFF,
@@ -29,7 +29,7 @@ class Physics {
 
   addPhysic ( mesh, type ) {
     const body = this.world.add( { type: [ type ],
-      size: [ mesh.scale.x, mesh.scale.y, mesh.scale.z ],
+      size: [ mesh.size.x, mesh.size.y, mesh.size.z ],
       pos: [ mesh.position.x, mesh.position.y, mesh.position.z ],
       rot: [ mesh.rotation.x * 180 / Math.PI, mesh.rotation.y * 180 / Math.PI, mesh.rotation.z * 180 / Math.PI ],
       move: true,
@@ -65,23 +65,29 @@ class Physics {
 }
 
 class Camera extends THREE.Object3D {
-  constructor () {
+  constructor ( callback ) {
     super()
-    this.geometry = new THREE.BoxGeometry( 1, 1, 1 )
     this.position.set( Math.random() * 2 - 1, 230, Math.random() * 2 - 1 )
     this.material = new THREE.MeshStandardMaterial( {
-      color: 0xff0000,
+      color: 0x111111,
       flatShading: true,
       roughness: 0.5,
       metalness: 0.6,
       dithering: true
     } )
-    this.scale.set( 16, 10, 5 )
-    this.rotation.set( Math.random() * 2 - 1, Math.random() * 2 - 1, 1.5 )
-    this.mesh = new THREE.Mesh( this.geometry, this.material )
-    this.mesh.castShadow = true
-    this.mesh.receiveShadow = true
-    this.add( this.mesh )
+    const loader = new THREE.OBJLoader()
+    // loader.load( 'https://dl.dropboxusercontent.com/s/jmtba1yrzljq21y/kyogre.obj', (obj) => {
+    loader.load( 'camera.obj', ( obj ) => {
+      this.mesh = obj.children[0]
+      const box = new THREE.Box3().setFromObject( this.mesh )
+      this.size = box.getSize()
+      this.mesh.material = this.material
+      this.mesh.castShadow = true
+      this.mesh.receiveShadow = true
+      this.add( this.mesh )
+      callback()
+    } )
+    this.rotation.set( Math.PI / 2, Math.random() * Math.PI / 4, 0 )
   }
   update () {
     // this.rotation.y += 0.01
@@ -93,15 +99,17 @@ class Xp {
   constructor () {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 5000 )
-    this.camera.position.z = 200
-    this.camera.position.y = 200
+    this.camera.position.z = 30
+    this.camera.position.y = 30
     this.controls = new THREE.OrbitControls( this.camera )
+    this.controls.maxDistance = 100
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     this.renderer.gammaInput = true
     this.renderer.gammaOutput = true
     this.renderer.setSize( Window.w, Window.h )
+    this.scene.fog = new THREE.Fog( 0xFFFFFF, 1, 250 )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
     this.physics = new Physics( this.scene )
     this.DELTA_TIME = 0
@@ -116,22 +124,23 @@ class Xp {
       .forEach( ( fn ) => this[ fn ] = this[ fn ].bind( this ) )
   }
   initMesh () {
-    this.cam = new Camera()
-    if ( this.objects.length === 30 ) {
-      this.physics.remove( 0 )
-      this.scene.remove( this.objects[0] )
-      this.objects.splice( 0, 1 )
-    }
-    this.physics.addPhysic( this.cam, 'box' )
-    this.objects.push( this.cam )
-    this.scene.add( this.cam )
+    this.cam = new Camera( () => {
+      if ( this.objects.length === 50 ) {
+        this.physics.remove( 0 )
+        this.scene.remove( this.objects[0] )
+        this.objects.splice( 0, 1 )
+      }
+      this.physics.addPhysic( this.cam, 'box' )
+      this.objects.push( this.cam )
+      this.scene.add( this.cam )
+    } )
   }
   initLights () {
     // const ambientLight = new THREE.AmbientLight( 0x111111 )
     // this.scene.add( ambientLight )
 
     const spotLight = new THREE.SpotLight( 0xffffff, 1 )
-    spotLight.position.set( 0, 300, 100 )
+    spotLight.position.set( 0, 200, 100 )
     // spotLight.angle = Math.PI / 4
     spotLight.penumbra = 0.05
     spotLight.decay = 2
@@ -143,6 +152,19 @@ class Xp {
     spotLight.shadow.camera.far = 400
     spotLight.shadow.camera.fov = 30
     this.scene.add( spotLight )
+    const spotLight2 = new THREE.SpotLight( 0xffffff, 1 )
+    spotLight2.position.set( 0, 200, -100 )
+    // spotLight.angle = Math.PI / 4
+    spotLight2.penumbra = 0.05
+    spotLight2.decay = 2
+    spotLight2.distance = 1000
+    spotLight2.castShadow = true
+    spotLight2.shadow.mapSize.width = 1024
+    spotLight2.shadow.mapSize.height = 1024
+    spotLight2.shadow.camera.near = 100
+    spotLight2.shadow.camera.far = 400
+    spotLight2.shadow.camera.fov = 30
+    this.scene.add( spotLight2 )
   }
   update () {
     this.physics.update()

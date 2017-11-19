@@ -48,7 +48,17 @@ html, body {
     will-change: transform;
   }
 }
-   
+
+.infos {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  color: $BLACK;
+  text-align: right;
+  text-transform: uppercase;
+  font-family: 'Oswald';
+  font-size: 1.5rem;
+}
 
 .credits {
   position: absolute;
