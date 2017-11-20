@@ -4,34 +4,59 @@ require( './utils' )
 const Mouse = { x: 0, y: 0, nX: 0, nY: 0 }
 const Window = { w: window.innerWidth, h: window.innerHeight }
 
+// const randomInRange = ( min, max ) => Math.floor( Math.random() * ( max - min + 1 ) ) + min
+
 class Sphere extends THREE.Object3D {
   constructor () {
     super()
 
-    this.geometry = new THREE.SphereGeometry( 10, 16, 16 )
+    this.geometry = new THREE.BufferGeometry()
+    const points = 10000
+    const radius = 1
+    const vertices = new Float32Array( points * 3 )
+    for ( let i = 0; i < vertices.length; i += 3 ) {
+      const theta = Math.random() * ( 2 * Math.PI )
+      const phi = Math.random() * Math.PI
+      vertices[ i ] = radius * Math.cos( theta ) * Math.sin( phi )
+      vertices[ i + 1 ] = radius * Math.sin( theta ) * Math.sin( phi )
+      vertices[ i + 2 ] = radius * Math.cos( phi )
+    }
+    this.geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) )
+    this.geometry.computeVertexNormals()
+    // this.geometry = new THREE.PlaneBufferGeometry( 10, 10, 16, 16 )
     this.uniforms = {
+      uColor: { value: new THREE.Color( 0x000000 ) },
       uTime: { value: 0 }
     }
+    // this.material = new THREE.MeshBasicMaterial( {
+    //   color: 0xff0000
+    // } )
     this.material = new THREE.ShaderMaterial( {
+      uniforms: this.uniforms,
       fragmentShader: dom.select.one( '#sphereFragment' ).textContent,
-      vertexShader: dom.select.one( '#sphereVertex' ).textContent
+      vertexShader: dom.select.one( '#sphereVertex' ).textContent,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false
     } )
-    this.mesh = new THREE.Mesh( this.geometry, this.material )
+    this.mesh = new THREE.Points( this.geometry, this.material )
     this.add( this.mesh )
     this.update = this.update.bind( this )
   }
   update ( d ) {
-    this.rotation.y += 0.01
-    this.rotation.z += 0.01
-    this.uniforms.uTime.value += d * 0.01
+    // this.rotation.y += 0.01
+    // this.rotation.z += 0.01
+    this.uniforms.uTime.value += d * 0.001
   }
 }
 
 class Xp {
   constructor () {
     this.scene = new THREE.Scene()
+    this.scene.add( new THREE.AxisHelper( 30 ) )
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
-    this.camera.position.z = 100
+    this.camera.position.z = 10
     this.controls = new THREE.OrbitControls( this.camera )
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
