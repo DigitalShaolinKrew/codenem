@@ -12,6 +12,16 @@ html, body {
   overflow: hidden;
   font-size: 62.5%;
 }
+.infos {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  color: $BLACK;
+  text-align: right;
+  font-size: 3rem;
+  text-transform: uppercase;
+  font-family: 'Oswald';
+}
 .credits {
   position: absolute;
   right: 20px;

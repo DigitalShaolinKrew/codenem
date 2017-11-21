@@ -7,32 +7,51 @@ const Window = { w: window.innerWidth, h: window.innerHeight }
 class Sphere extends THREE.Object3D {
   constructor () {
     super()
-
-    this.geometry = new THREE.SphereGeometry( 10, 16, 16 )
-    this.uniforms = {
-      uTime: { value: 0 }
-    }
-    this.material = new THREE.ShaderMaterial( {
-      fragmentShader: dom.select.one( '#sphereFragment' ).textContent,
-      vertexShader: dom.select.one( '#sphereVertex' ).textContent
+    const loader = new THREE.TextureLoader()
+    loader.load( 'rock.jpg', ( texture ) => {
+      this.geometry = new THREE.PlaneGeometry( 81, 61, 512, 512 )
+      console.log( texture )
+      this.uniforms = {
+        uTime: { value: 0 },
+        uTransition: { value: 0 },
+        uTexture: { type: 't', value: texture }
+      }
+      this.material = new THREE.ShaderMaterial( {
+        uniforms: this.uniforms,
+        fragmentShader: dom.select.one( '#sphereFragment' ).textContent,
+        vertexShader: dom.select.one( '#sphereVertex' ).textContent,
+        side: THREE.DoubleSide
+      } )
+      this.mesh = new THREE.Mesh( this.geometry, this.material )
+      this.mesh.rotation.x = -Math.PI / 2
+      this.add( this.mesh )
     } )
-    this.mesh = new THREE.Mesh( this.geometry, this.material )
-    this.add( this.mesh )
     this.update = this.update.bind( this )
   }
-  update ( d ) {
-    this.rotation.y += 0.01
-    this.rotation.z += 0.01
-    this.uniforms.uTime.value += d * 0.01
+  update ( d, camera ) {
+    // this.rotation.y += 0.005
+    // this.rotation.z += 0.01
+    if ( this.mesh ) {
+      this.uniforms.uTime.value += d * 0.01
+      const dist = camera.position.distanceTo( this.position )
+      let scrollValue = dist / 350
+      scrollValue = scrollValue < 0 ? 0 : scrollValue
+      scrollValue = scrollValue > 1 ? 1 : scrollValue
+      this.uniforms.uTransition.value = scrollValue
+      this.scale.set( scrollValue * 3, scrollValue * 3, scrollValue * 3 )
+      this.rotation.x = Math.abs( 1 - scrollValue ) * Math.PI / 1.8
+    }
   }
 }
 
 class Xp {
   constructor () {
     this.scene = new THREE.Scene()
-    this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
-    this.camera.position.z = 100
+    this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 0.1, 1000 )
+    this.camera.position.z = 400
     this.controls = new THREE.OrbitControls( this.camera )
+    this.controls.minDistance = 1
+    this.controls.maxDistance = 400
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
@@ -67,7 +86,7 @@ class Xp {
   update () {
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
-    this.sphere.update( this.DELTA_TIME )
+    this.sphere.update( this.DELTA_TIME, this.camera )
     this.renderer.render( this.scene, this.camera )
   }
   resize () {

@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="app"></div>
-
+  <div class="infos"> Scroll to reveal the rock.</div>
   <div class="credits">
     <h1 class="credits__title">shaolin405</h1>
     <p class="credits__wrapper">
@@ -19,14 +19,47 @@
   <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/127738/OrbitControls.js"></script>
   <script type="x-shader/vertex-shader" id="sphereVertex">
     uniform float uTime;
+    uniform float uTransition;
+    uniform sampler2D uTexture;
+    varying vec2 vUv;
+    varying vec4 texture;
+    varying float bw;
+
+    float PI = 3.14159265;
+    float TWOPI = 6.28318531;
+    float baseRadius = 10.0;
+
+    vec3 sphere( float u, float v) {
+      u *= PI;
+      v *= TWOPI;
+      vec3 pSphere;
+      pSphere.x = baseRadius * cos(v) * sin(u);
+      pSphere.y = baseRadius * sin(v) * sin(u);
+      pSphere.z = baseRadius * cos(u);
+      return pSphere;
+    }
+
     void main() {
-      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      vUv = uv;
+      vec3 spherePos = sphere( uv.x, uv.y );
+      texture = texture2D( uTexture, uv );
+      bw = ( texture.x + texture.y + texture.z ) / 2.0 ;
+      vec3 originalPos = position + normal * bw * 10.0;
+      vec3 newPosition = spherePos + normal * bw * 10.0;
+      vec3 pos = mix( originalPos, -newPosition, uTransition );
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );
     }
   </script>
-  <script type="x-shader/vertex-shader" id="sphereFragment">
+  <script type="x-shader/fragment-shader" id="sphereFragment">
     uniform float uTime;
+    uniform sampler2D uTexture;
+    varying vec2 vUv;
+    varying vec4 texture;
+    varying float bw;
     void main() {
-      gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+      float col = bw;
+      vec4 bwColor = vec4( col, col, col, .9 );
+      gl_FragColor = bwColor;
     }
   </script>
   <script src="app.bundle.js"></script>
