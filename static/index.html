@@ -23,7 +23,7 @@
       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
     }
   </script>
-  <script type="x-shader/vertex-shader" id="sphereFragment">
+  <script type="x-shader/fragment-shader" id="sphereFragment">
     uniform float uTime;
     void main() {
       gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );

@@ -13,6 +13,7 @@ class Sphere extends THREE.Object3D {
       uTime: { value: 0 }
     }
     this.material = new THREE.ShaderMaterial( {
+      uniforms: this.uniforms,
       fragmentShader: dom.select.one( '#sphereFragment' ).textContent,
       vertexShader: dom.select.one( '#sphereVertex' ).textContent
     } )
