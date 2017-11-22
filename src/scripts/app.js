@@ -4,26 +4,38 @@ require( './utils' )
 const Mouse = { x: 0, y: 0, nX: 0, nY: 0 }
 const Window = { w: window.innerWidth, h: window.innerHeight }
 
-class Sphere extends THREE.Object3D {
+const map = ( num, min1, max1, min2, max2 ) => {
+  let num1 = ( num - min1 ) / ( max1 - min1 )
+  let num2 = ( num1 * ( max2 - min2 ) ) + min2
+  return num2
+}
+
+class Plane extends THREE.Object3D {
   constructor () {
     super()
 
-    this.geometry = new THREE.SphereGeometry( 10, 16, 16 )
+    this.geometry = new THREE.PlaneBufferGeometry( 100, 50 )
     this.uniforms = {
-      uTime: { value: 0 }
+      uTime: { value: 0 },
+      uTexture: { value: new THREE.TextureLoader().load( 'las-vegas-parano.jpg' ) },
+      uMouse: { value: new THREE.Vector2( Mouse.nX, Mouse.nY ) },
+      uResolution: { value: new THREE.Vector2( Window.w, Window.h ) }
     }
     this.material = new THREE.ShaderMaterial( {
       uniforms: this.uniforms,
-      fragmentShader: dom.select.one( '#sphereFragment' ).textContent,
-      vertexShader: dom.select.one( '#sphereVertex' ).textContent
+      fragmentShader: dom.select.one( '#planeFragment' ).textContent,
+      vertexShader: dom.select.one( '#planeVertex' ).textContent,
+      side: THREE.DoubleSide
     } )
     this.mesh = new THREE.Mesh( this.geometry, this.material )
     this.add( this.mesh )
     this.update = this.update.bind( this )
   }
   update ( d ) {
-    this.rotation.y += 0.01
-    this.rotation.z += 0.01
+    this.uniforms.uResolution.value.x = Window.w
+    this.uniforms.uResolution.value.y = Window.h
+    this.uniforms.uMouse.value.x += ( map( Mouse.nX, -1, 1, 0.1, 0.9 ) - this.uniforms.uMouse.value.x ) * 0.2
+    this.uniforms.uMouse.value.y += ( map( Mouse.nY, -1, 1, 0.2, 0.8 ) - this.uniforms.uMouse.value.y ) * 0.2
     this.uniforms.uTime.value += d * 0.01
   }
 }
@@ -34,6 +46,8 @@ class Xp {
     this.camera = new THREE.PerspectiveCamera( 45, Window.w / Window.h, 1, 1000 )
     this.camera.position.z = 100
     this.controls = new THREE.OrbitControls( this.camera )
+    this.controls.minDistance = 50
+    this.controls.maxDistance = 150
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setSize( Window.w, Window.h )
     dom.select.one( '.app' ).appendChild( this.renderer.domElement )
@@ -50,8 +64,8 @@ class Xp {
       .forEach( ( fn ) => this[ fn ] = this[ fn ].bind( this ) )
   }
   initMeshes () {
-    this.sphere = new Sphere()
-    this.scene.add( this.sphere )
+    this.plane = new Plane()
+    this.scene.add( this.plane )
   }
   initLights () {
     const ambientLight = new THREE.AmbientLight( 0x111111 )
@@ -68,7 +82,7 @@ class Xp {
   update () {
     this.DELTA_TIME = Date.now() - this.LAST_TIME
     this.LAST_TIME = Date.now()
-    this.sphere.update( this.DELTA_TIME )
+    this.plane.update( this.DELTA_TIME )
     this.renderer.render( this.scene, this.camera )
   }
   resize () {
@@ -105,7 +119,7 @@ class App {
     Mouse.x = e.clientX || Mouse.x
     Mouse.y = e.clientY || Mouse.y
     Mouse.nX = ( Mouse.x / Window.w ) * 2 - 1
-    Mouse.nY = ( Mouse.y / Window.h ) * 2 + 1
+    Mouse.nY = -( Mouse.y / Window.h ) * 2 + 1
   }
   update () {
     this.xp.update()

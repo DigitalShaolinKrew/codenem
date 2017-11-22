@@ -17,16 +17,28 @@
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>
   <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/127738/OrbitControls.js"></script>
-  <script type="x-shader/vertex-shader" id="sphereVertex">
+  <script type="x-shader/vertex-shader" id="planeVertex">
     uniform float uTime;
+    varying vec2 vUv;
     void main() {
+      vUv = uv;
       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
     }
   </script>
-  <script type="x-shader/fragment-shader" id="sphereFragment">
+  <script type="x-shader/fragment-shader" id="planeFragment">
     uniform float uTime;
+    uniform sampler2D uTexture;
+    uniform vec2 uMouse;
+    uniform vec2 uResolution;
+    varying vec2 vUv;
     void main() {
-      gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+      vec2 st = gl_FragCoord.xy / uResolution;
+      vec2 pos = uMouse - st;
+      float a = atan(pos.y,pos.x);
+      float d = distance( uMouse , gl_FragCoord.xy );
+      float r = 1. - length(pos)*1.;
+      vec2 dUv = vUv * r;
+      gl_FragColor = texture2D(uTexture, dUv);
     }
   </script>
   <script src="app.bundle.js"></script>
